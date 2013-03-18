@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+	<class name="com.online.model.VotacioRestaurant" table="votacio_restaurant">
+	<cache usage="read-write" />
+		<id name="id" type="integer">
+			<column name="RESTAURANT_ID" />
+			<generator class="foreign">
+				<param name="property">restaurant</param>
+			</generator>
+		</id>
+		<one-to-one name="restaurant" class="com.online.model.Restaurant"
+			constrained="true"></one-to-one>
+			
+		<property name="nvots" type="java.lang.Long" lazy="false" >
+			<column name="NVOTS"  />
+		</property>		
+		
+		<property name="punctuacio" type="integer" lazy="false" >
+			<column name="VAL_VOT" />
+		</property>		
+	</class>
+</hibernate-mapping>
