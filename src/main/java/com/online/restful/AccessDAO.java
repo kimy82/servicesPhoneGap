@@ -25,6 +25,7 @@ import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
@@ -59,6 +60,24 @@ public class AccessDAO extends HibernateDaoSupport {
 		session.close();
 		
         return json;
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/delete")
+    public String delete(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo,@QueryParam("user") String userName) {
+        
+        String json="";
+        Session session = this.getSessionFactory().openSession();
+		session.beginTransaction();
+		
+		session.createQuery("delete from Users usu where usu.userName="+userName).executeUpdate();							
+		
+		
+		
+		session.close();
+		
+        return "{\"ok\":\"ok\"}";
     }
 
 }
