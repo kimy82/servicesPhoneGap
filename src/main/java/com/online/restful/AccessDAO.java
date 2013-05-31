@@ -20,6 +20,7 @@
 
 package com.online.restful;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 import javax.ws.rs.GET;
@@ -32,12 +33,14 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.wink.common.annotations.Workspace;
 import org.apache.wink.server.utils.LinkBuilders;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.online.model.Users;
+import com.online.utils.Utils;
 
 @Workspace(workspaceTitle = "Demo Bookmarks Service", collectionTitle = "My Bookmarks")
 @Path("/dao")
@@ -78,6 +81,40 @@ public class AccessDAO extends HibernateDaoSupport {
 		session.close();
 		
         return "{\"ok\":\"ok\"}";
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/login")
+    public String login(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo,@QueryParam("user") String userName,@QueryParam("pass") String password) {
+    	try {
+	        String json="";
+	        if(userName==null || userName.equals("") || password==null || password.equals("") || userName.equals("null")|| password.equals("null") ){
+	        	
+	        }
+	        Session session = this.getSessionFactory().openSession();
+			session.beginTransaction();
+			
+			List<Users> userList = session.createQuery("select from Users usu where usu.userName="+userName+" and usu.password="+Utils.createSHA(password)).list();
+			
+			
+			if(userList==null || userList.isEmpty()){
+				return "{\"ok\":\"ko\"}";
+			}else{
+				Users user = userList.get(0);
+				String role = user.getUserRole().getRole();
+				json="{\"ok\":\"ok\" , \"username\" : \""+userName+"\", \"role\" : \""+role+"\"}";
+			}									
+			session.close();
+			
+	        return json;
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		}
     }
 
 }
