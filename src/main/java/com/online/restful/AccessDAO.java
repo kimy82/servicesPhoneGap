@@ -25,6 +25,7 @@ import java.util.List;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
@@ -39,6 +40,7 @@ import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.online.model.UserRole;
 import com.online.model.Users;
 import com.online.utils.Utils;
 
@@ -68,17 +70,63 @@ public class AccessDAO extends HibernateDaoSupport {
     @GET
     @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
     @Path("/delete")
-    public String delete(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo,@QueryParam("user") String userName) {
+    public String delete(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
         
         String json="";
-        Session session = this.getSessionFactory().openSession();
+        String userName = uriInfo.getQueryParameters().get("user").get(0);
+    
+		
+		List<Users> userFounds = (List<Users>) getHibernateTemplate().find("from Users u where u.username = ?", userName);
+		if (userFounds.isEmpty())
+			return null;
+		Users userFound = userFounds.get(0);
+		
+		
+		Session session = this.getSessionFactory().openSession();
 		session.beginTransaction();
-		
-		session.createQuery("delete from Users usu where usu.userName="+userName).executeUpdate();							
-		
-		
-		
+		Users userToDelete = (Users) session.load(Users.class, userFound.getId());
+		session.delete(userToDelete.getUserRole());
+		session.delete(userToDelete);
+		session.getTransaction().commit();
 		session.close();
+		
+		
+        return "{\"ok\":\"ok\"}";
+    }
+    
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/insert")
+    public String insert(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+        
+        String json="";
+        String userName = uriInfo.getQueryParameters().get("user").get(0);
+        String password = uriInfo.getQueryParameters().get("pass").get(0);
+        
+        try {
+        	password = Utils.createSHA(password);
+		} catch (NoSuchAlgorithmException e) {			
+			e.printStackTrace();
+			 return "{\"ok\":\"ko\"}";
+		}
+
+        Users user = new Users();
+        user.setAddress("provaAndroid");
+        user.setEnabled(1);
+        user.setIndicacions("");
+        user.setNom(userName);
+        user.setPassword(password);
+        user.setUsername(userName);
+        
+        getHibernateTemplate().save(user);
+    	
+		UserRole userRole = new UserRole();
+		userRole.setRole("ROLE_ADMIN");
+		userRole.setIdUser(user.getId());
+		userRole.setId(user.getId());
+
+		getHibernateTemplate().save(userRole);
 		
         return "{\"ok\":\"ok\"}";
     }
@@ -86,22 +134,26 @@ public class AccessDAO extends HibernateDaoSupport {
     @GET
     @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
     @Path("/login")
-    public String login(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo,@QueryParam("user") String userName,@QueryParam("pass") String password) {
+    public String login(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
     	try {
 	        String json="";
+	        String userName = uriInfo.getQueryParameters().get("user").get(0);
+	        String password = uriInfo.getQueryParameters().get("pass").get(0);
 	        if(userName==null || userName.equals("") || password==null || password.equals("") || userName.equals("null")|| password.equals("null") ){
-	        	
+	        	return "{\"ok\":\"ko\"}";
 	        }
 	        Session session = this.getSessionFactory().openSession();
 			session.beginTransaction();
 			
-			List<Users> userList = session.createQuery("select from Users usu where usu.userName="+userName+" and usu.password="+Utils.createSHA(password)).list();
+			List<Users> userList = session.createQuery("from Users usu where usu.username='"+userName+"' and usu.password='"+Utils.createSHA(password)+"'").list();
 			
 			
 			if(userList==null || userList.isEmpty()){
 				return "{\"ok\":\"ko\"}";
 			}else{
+				
 				Users user = userList.get(0);
+				System.out.println("userrole"+user.getUserRole().getRole());
 				String role = user.getUserRole().getRole();
 				json="{\"ok\":\"ok\" , \"username\" : \""+userName+"\", \"role\" : \""+role+"\"}";
 			}									
