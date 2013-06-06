@@ -23,17 +23,6 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
                                            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
 
-	<!--
-		Resources Registrar.
-		This bean is used to provide an Application object.
-		The bean has the following properties:
-		    - classes - returns Classes. Same as Application.getClasses().
-		    			Classes can be classes either of resources or providers.
-		    			The scope is used according default framework definition.
-		    - instances - returns instances of either resources or providers. Instances
-		    			are actually Spring beans and their scope is controled using Spring.
-		    - priority - priority of the Registrar. When omitted, the default value is 0.5
-		 -->
 	<import resource="DataSource.xml"/>
 	<import resource="Hibernate.xml"/>
 	
@@ -44,44 +33,37 @@
 		</property>
 		<property name="instances">
 			<set>
-				<ref local="resource.bookmarks" />
-				<ref local="accessDB" />
+				<ref local="usersSrv" />
 			</set>
 		</property>
 	</bean>
 
 
-	<!-- Resources -->
-
-	<bean id="resource.bookmarks" class="org.apache.wink.example.bookmarks.BookmarksResource" />
-	
-	<!-- DAO ACCES DDBB -->
-	<bean id="accessDB" class="com.online.restful.AccessDAO" >
+	<!-- Serveis rest -->	
+	<bean id="usersSrv" class="com.online.restful.UsersSrv" >
 	    <property name="sessionFactory" ref="sessionFactory"></property>
 	</bean>
-	<!-- Custom proprties defintion -->
 
 	<!-- bookmarks.customPropertiesFactory defines loaded of the custom properties file -->
-	<bean id="bookmarks.customPropertiesFactory"
+	<bean id="catalog.customPropertiesFactory"
 		class="org.springframework.beans.factory.config.PropertiesFactoryBean">
 		<property name="locations">
 			<list>
-				<value>WEB-INF/bookmarks.properties
-				</value>
+				<value>WEB-INF/catalog.properties</value>
 			</list>
 		</property>
 	</bean>
 
 	<!-- bookmarks.placeholderConfigurer overrides the default winkPropertiesFactory placeholder
 	     that causes Wink to use bookmarks.customPropertiesFactory instead of the default one -->
-	<bean id="bookmarks.placeholderConfigurer"
+	<bean id="catalog.placeholderConfigurer"
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="ignoreUnresolvablePlaceholders" value="true" />
 		<property name="order" value="1" />
 		<property name="propertiesArray">
 			<list>
 				<props>
-					<prop key="winkPropertiesFactory">bookmarks.customPropertiesFactory
+					<prop key="winkPropertiesFactory">catalog.customPropertiesFactory
 					</prop>
 				</props>
 			</list>
