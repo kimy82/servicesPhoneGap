@@ -44,20 +44,20 @@ import com.online.model.UserRole;
 import com.online.model.Users;
 import com.online.utils.Utils;
 
-@Workspace(workspaceTitle = "Demo Bookmarks Service", collectionTitle = "My Bookmarks")
-@Path("/dao")
-public class AccessDAO extends HibernateDaoSupport {
+@Workspace(workspaceTitle = "services", collectionTitle = "userSrv")
+@Path("/service/userSrv")
+public class UsersSrv extends HibernateDaoSupport {
 
    
     @GET
     @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
-    public String getBookmarks(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    public String getAllUsers(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
         
         String json="";
         Session session = this.getSessionFactory().openSession();
 		session.beginTransaction();
 		
-		List<Users> userList = (List<Users>) session.createQuery("from Users where enabled=1").list();							
+		List<Users> userList = (List<Users>) session.createQuery("from Users").list();							
 		
 		Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
 		json = gson.toJson(userList);
@@ -112,10 +112,6 @@ public class AccessDAO extends HibernateDaoSupport {
 		}
 
         Users user = new Users();
-        user.setAddress("provaAndroid");
-        user.setEnabled(1);
-        user.setIndicacions("");
-        user.setNom(userName);
         user.setPassword(password);
         user.setUsername(userName);
         
@@ -123,7 +119,7 @@ public class AccessDAO extends HibernateDaoSupport {
     	
 		UserRole userRole = new UserRole();
 		userRole.setRole("ROLE_ADMIN");
-		userRole.setIdUser(user.getId());
+		userRole.setUser(user);
 		userRole.setId(user.getId());
 
 		getHibernateTemplate().save(userRole);
@@ -167,6 +163,17 @@ public class AccessDAO extends HibernateDaoSupport {
 			e.printStackTrace();
 			return "{\"ok\":\"ko\"}";
 		}
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/video")
+    public String video(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+        
+        String json="";
+        
+		
+        return "{\"ok\":\"ok\"}";
     }
 
 }

@@ -3,8 +3,21 @@ package com.online.model;
 
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
 import com.google.gson.annotations.Expose;
 
+@Entity
+@Table( name="USERS" )
 public class Users implements Serializable{
 
 	/**
@@ -19,34 +32,28 @@ public class Users implements Serializable{
 
 	private String				password;
 
-	@Expose
-	private int					enabled;
-
 	protected UserRole			userRole;
-
-	private String				address;
 
 	private String				telNumber;
 	
-	private String				indicacions;
-	
-	private String				nom;
+	private Company				company;
 
 	// CONSTRUCTORS
 	public Users( String username ) {
 
 		super();
-		this.username = username;
-		this.enabled = 1;
+		this.username = username;		
 	}
 
 	public Users() {
 
 		super();
-		this.enabled = 1;
 	}
 
 	// GETTERS i SETTERS
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@Column(name = "USER_ID", unique = true, nullable = false)
 	public Long getId(){
 
 		return id;
@@ -57,6 +64,7 @@ public class Users implements Serializable{
 		this.id = id;
 	}
 
+	@Column(name = "USERNAME", unique = true, nullable = false, length = 45)
 	public String getUsername(){
 
 		return username;
@@ -67,6 +75,7 @@ public class Users implements Serializable{
 		this.username = username;
 	}
 
+	@Column(name = "PASSWORD", unique = true, nullable = false, length = 65)
 	public String getPassword(){
 
 		return password;
@@ -76,19 +85,9 @@ public class Users implements Serializable{
 
 		this.password = password;
 	}
-
-	public int getEnabled(){
-
-		return enabled;
-	}
-
-	public void setEnabled( int enabled ){
-
-		this.enabled = enabled;
-	}
-
+	
+	@OneToOne(fetch = FetchType.EAGER, mappedBy = "user", cascade = CascadeType.ALL)
 	public UserRole getUserRole(){
-
 		return userRole;
 	}
 
@@ -97,16 +96,7 @@ public class Users implements Serializable{
 		this.userRole = userRole;
 	}
 
-	public String getAddress(){
-	
-		return address;
-	}
-
-	public void setAddress( String address ){
-	
-		this.address = address;
-	}
-
+	@Column(name = "TELEFON", nullable = true, length = 45)
 	public String getTelNumber(){
 	
 		return telNumber;
@@ -116,25 +106,17 @@ public class Users implements Serializable{
 	
 		this.telNumber = telNumber;
 	}
-
-	public String getIndicacions(){
 	
-		return indicacions;
+	
+	@ManyToOne(cascade = CascadeType.ALL)
+	public Company getCompany(){
+	
+		return company;
 	}
 
-	public void setIndicacions( String indicacions ){
+	public void setCompany( Company company ){
 	
-		this.indicacions = indicacions;
-	}
-
-	public String getNom(){
-	
-		return nom;
-	}
-
-	public void setNom( String nom ){
-	
-		this.nom = nom;
-	}		
+		this.company = company;
+	}				
 
 }
