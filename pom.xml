@@ -21,6 +21,18 @@
 		<artifactId>ext</artifactId>
 		<version>1.2.0-incubating</version>
 	</parent>
+	<repositories>
+		<repository>
+			<id>terracotta-releases</id>
+			<url>http://www.terracotta.org/download/reflector/releases</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
 	<!-- Dependency on Wink SDK library -->
 	<dependencies>
 		<dependency>
@@ -67,12 +79,26 @@
 			<artifactId>hibernate3</artifactId>
 			<version>3.2.3.ga</version>
 		</dependency>
-			<dependency>
+		<dependency>
 			<groupId>net.sf.ehcache</groupId>
 			<artifactId>ehcache</artifactId>
 			<version>1.2.3</version>
 		</dependency>
-
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-annotations</artifactId>
+			<version>3.4.0.GA</version>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-commons-annotations</artifactId>
+			<version>3.3.0.ga</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.persistence</groupId>
+			<artifactId>persistence-api</artifactId>
+			<version>1.0</version>
+		</dependency>
 		<!-- Hibernate library dependecy start -->
 		<dependency>
 			<groupId>dom4j</groupId>
