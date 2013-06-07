@@ -21,13 +21,12 @@
 package com.online.restful;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
@@ -36,28 +35,47 @@ import org.apache.wink.common.annotations.Workspace;
 import org.apache.wink.server.utils.LinkBuilders;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
+import org.hibernate.criterion.Restrictions;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.online.dao.UsersDao;
 import com.online.model.UserRole;
 import com.online.model.Users;
+import com.online.utils.Constants;
 import com.online.utils.Utils;
 
 @Workspace(workspaceTitle = "services", collectionTitle = "userSrv")
 @Path("/service/userSrv")
 public class UsersSrv extends HibernateDaoSupport {
-
+	
+	UsersDao usersDao;
    
     @GET
     @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
-    public String getAllUsers(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    public String getUsers(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
         
         String json="";
+        
+        String userName = uriInfo.getQueryParameters().get("user").get(0);
+        if(userName==null || userName.equals("null"))return "{}";
+        
+    	List<Users> userFounds = (List<Users>) getHibernateTemplate().find("from Users u where u.username = ?", userName);
+		if (userFounds==null || userFounds.isEmpty())
+			return "{}";
+		Users userFound = userFounds.get(0);
+		
+        
         Session session = this.getSessionFactory().openSession();
 		session.beginTransaction();
-		
-		List<Users> userList = (List<Users>) session.createQuery("from Users").list();							
+		List<Users> userList = new ArrayList<Users>();
+		if(userFound.getUserRole().getRole().equals("ROLE_SUPERADMIN")){
+			userList = (List<Users>) session.createQuery("from Users").list();		
+		}else if (userFound.getUserRole().getRole().equals("ROLE_ADMIN")){
+			Long idCompany = userFound.getCompany().getId();
+			userList = (List<Users>) session.createCriteria(Users.class).add(Restrictions.eq("company.id", idCompany)).list();
+		}
 		
 		Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
 		json = gson.toJson(userList);
@@ -77,7 +95,7 @@ public class UsersSrv extends HibernateDaoSupport {
     
 		
 		List<Users> userFounds = (List<Users>) getHibernateTemplate().find("from Users u where u.username = ?", userName);
-		if (userFounds.isEmpty())
+		if (userFounds==null || userFounds.isEmpty())
 			return null;
 		Users userFound = userFounds.get(0);
 		
@@ -103,6 +121,7 @@ public class UsersSrv extends HibernateDaoSupport {
         String json="";
         String userName = uriInfo.getQueryParameters().get("user").get(0);
         String password = uriInfo.getQueryParameters().get("pass").get(0);
+        String role = uriInfo.getQueryParameters().get("role").get(0);
         
         try {
         	password = Utils.createSHA(password);
@@ -118,9 +137,15 @@ public class UsersSrv extends HibernateDaoSupport {
         getHibernateTemplate().save(user);
     	
 		UserRole userRole = new UserRole();
-		userRole.setRole("ROLE_ADMIN");
-		userRole.setUser(user);
-		userRole.setId(user.getId());
+		if(role==null || role.equals("null")){
+			userRole = usersDao.loadRole(Constants.ROLE_CLIENT);
+		}else if ( role.equals("ROLE_SUPER_ADMIN")){
+			userRole = usersDao.loadRole(Constants.ROLE_SUPER_ADMIN);
+		}else if(role.equals("ROLE_ADMIN")){
+			userRole = usersDao.loadRole(Constants.ROLE_ADMIN);
+		}else{
+			userRole = usersDao.loadRole(Constants.ROLE_CLIENT);
+		}
 
 		getHibernateTemplate().save(userRole);
 		
@@ -149,9 +174,13 @@ public class UsersSrv extends HibernateDaoSupport {
 			}else{
 				
 				Users user = userList.get(0);
-				System.out.println("userrole"+user.getUserRole().getRole());
-				String role = user.getUserRole().getRole();
-				json="{\"ok\":\"ok\" , \"username\" : \""+userName+"\", \"role\" : \""+role+"\"}";
+				
+				String role = user.getUserRole()==null? "ROLE_CLIENT" : user.getUserRole().getRole();
+				String company = user.getCompany().getName();
+				Long companyId = user.getCompany().getId();
+				String idioma = user.getIdioma()==null? "CA":user.getIdioma().getName();
+				
+				json="{\"ok\":\"ok\" , \"username\" : \""+userName+"\" , \"password\" : \""+password+"\", \"role\" : \""+role+"\", \"companyName\":\""+company+"\", \"companyId\":\""+companyId+"\", \"idioma\":\""+idioma+"\"}";
 			}									
 			session.close();
 			
@@ -175,5 +204,12 @@ public class UsersSrv extends HibernateDaoSupport {
 		
         return "{\"ok\":\"ok\"}";
     }
+
+	public void setUsersDao( UsersDao usersDao ){
+	
+		this.usersDao = usersDao;
+	}
+    
+    
 
 }

@@ -42,8 +42,18 @@
 	<!-- Serveis rest -->	
 	<bean id="usersSrv" class="com.online.restful.UsersSrv" >
 	    <property name="sessionFactory" ref="sessionFactory"></property>
+	    <property name="usersDao" ref="usersDao"></property>
 	</bean>
-
+	<!-- DAOS -->
+	<bean id="usersDao" class="com.online.dao.impl.UsersDaoImpl" >
+   		<property name="sessionFactory" ref="sessionFactory"></property>
+   </bean>
+   <bean id="companyDao" class="com.online.dao.impl.CompanyDaoImpl" >
+   		<property name="sessionFactory" ref="sessionFactory"></property>
+   </bean>
+    <bean id="idiomaDao" class="com.online.dao.impl.IdiomaDaoImpl" >
+   		<property name="sessionFactory" ref="sessionFactory"></property>
+   </bean>
 	<!-- bookmarks.customPropertiesFactory defines loaded of the custom properties file -->
 	<bean id="catalog.customPropertiesFactory"
 		class="org.springframework.beans.factory.config.PropertiesFactoryBean">
@@ -69,4 +79,30 @@
 			</list>
 		</property>
 	</bean>
+	<!-- JOB PER CREAR INSERTS INICIALS A LA BBDD -->
+	<bean id="job" class="org.springframework.scheduling.quartz.JobDetailBean">
+        <property name="jobClass" value="com.online.crons.WorkOutPunctuation" />
+        <property name="jobDataAsMap">
+            <map>
+                 <entry key="entorn" value="local" />
+                 <entry key="usersDao" value-ref="usersDao" /> 
+                 <entry key="companyDao" value-ref="companyDao" />
+                 <entry key="idiomaDao" value-ref="idiomaDao" />                
+            </map>
+        </property>
+    </bean>
+    <bean id="onstartup" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+		<property name="jobDetail" ref="job" />
+		<property name="startDelay" value="10000" />
+		<!-- repeat every 50 seconds -->
+		<property name="repeatInterval" value="50000" />
+		<property name="repeatCount" value="0" />
+	</bean>
+	 <bean id="schedulerFactory" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="triggers">
+            <list>
+                <ref local="onstartup" />                
+            </list>
+        </property>
+    </bean>
 </beans>

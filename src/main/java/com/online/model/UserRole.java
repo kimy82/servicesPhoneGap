@@ -4,12 +4,9 @@ import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToOne;
-import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 
 @Entity
@@ -27,20 +24,14 @@ public class UserRole implements Serializable{
 	
 	private String				role;
 	
-	private Users				user;
-	
-
-	
-	
-	
 	//CONSTRUCTORS
 	public UserRole( ) {
 		super();	
 	}
-
-
-
-
+	
+	public UserRole(String role ) {
+		this.role=role;
+	}
 
 	//GETTERS i SETTERS
 	@Id
@@ -66,15 +57,4 @@ public class UserRole implements Serializable{
 		this.role = role;
 	}
 
-	@OneToOne(fetch = FetchType.LAZY)
-	@PrimaryKeyJoinColumn
-	public Users getUser(){
-	
-		return user;
-	}
-
-	public void setUser( Users user ){
-	
-		this.user = user;
-	}
 }

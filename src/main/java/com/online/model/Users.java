@@ -37,6 +37,8 @@ public class Users implements Serializable{
 	private String				telNumber;
 	
 	private Company				company;
+	
+	private Idioma				idioma;
 
 	// CONSTRUCTORS
 	public Users( String username ) {
@@ -75,7 +77,7 @@ public class Users implements Serializable{
 		this.username = username;
 	}
 
-	@Column(name = "PASSWORD", unique = true, nullable = false, length = 65)
+	@Column(name = "PASSWORD", unique = false, nullable = false, length = 65)
 	public String getPassword(){
 
 		return password;
@@ -86,7 +88,7 @@ public class Users implements Serializable{
 		this.password = password;
 	}
 	
-	@OneToOne(fetch = FetchType.EAGER, mappedBy = "user", cascade = CascadeType.ALL)
+	@ManyToOne(cascade = CascadeType.ALL)
 	public UserRole getUserRole(){
 		return userRole;
 	}
@@ -118,5 +120,16 @@ public class Users implements Serializable{
 	
 		this.company = company;
 	}				
+	
+	@ManyToOne(cascade = CascadeType.ALL)
+	public Idioma getIdioma(){
+	
+		return idioma;
+	}
+
+	public void setIdioma( Idioma idioma ){
+	
+		this.idioma = idioma;
+	}
 
 }

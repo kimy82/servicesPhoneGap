@@ -26,6 +26,9 @@ public class Idioma implements Serializable{
 	// CONSTRUCTORS
 	public Idioma() {
 	}
+	public Idioma(String name) {
+		this.name=name;
+	}
 
 	// GETTERS i SETTERS
 	@Id

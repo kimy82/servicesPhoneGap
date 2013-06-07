@@ -7,7 +7,11 @@
 <web-app>
 	<display-name>Catalog</display-name>
 	<description>Catalog for products</description>
-
+	<context-param>		
+		<param-name>entorn</param-name>
+		<param-value>local</param-value>
+		<description>entorn produccio/local</description>
+	</context-param>
 	<!--
 		Location of file that defines the Spring root application context for
 		Wink. The Spring context specified here will be loaded by
