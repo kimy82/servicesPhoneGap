@@ -29,5 +29,12 @@ public class IdiomaDaoImpl extends HibernateDaoSupport implements IdiomaDao{
 		Idioma idioma = getHibernateTemplate().load(Idioma.class, id);
 		return idioma;
 	}
+	
+	public Idioma load( String idioma ){
+		List<Idioma> idiomaList = (List<Idioma>)getHibernateTemplate().find("from Idioma idioma where idioma.name='"+idioma+"'");
+		if(idiomaList==null || idiomaList.isEmpty()) return null;
+		Idioma idiomaCheck = idiomaList.get(0);
+		return idiomaCheck;
+	}
 
 }

@@ -13,4 +13,6 @@ public interface IdiomaDao {
 	
 	Idioma load( Long id );
 	
+	Idioma load( String idioma );
+	
 }

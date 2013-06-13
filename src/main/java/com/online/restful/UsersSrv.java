@@ -40,6 +40,7 @@ import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.online.dao.IdiomaDao;
 import com.online.dao.UsersDao;
 import com.online.model.UserRole;
 import com.online.model.Users;
@@ -51,6 +52,7 @@ import com.online.utils.Utils;
 public class UsersSrv extends HibernateDaoSupport {
 	
 	UsersDao usersDao;
+	IdiomaDao idiomaDao;
    
     @GET
     @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
@@ -70,11 +72,11 @@ public class UsersSrv extends HibernateDaoSupport {
         Session session = this.getSessionFactory().openSession();
 		session.beginTransaction();
 		List<Users> userList = new ArrayList<Users>();
-		if(userFound.getUserRole().getRole().equals("ROLE_SUPERADMIN")){
+		if(userFound.getUserRole().getRole().equals("ROLE_SUPER_ADMIN")){
 			userList = (List<Users>) session.createQuery("from Users").list();		
 		}else if (userFound.getUserRole().getRole().equals("ROLE_ADMIN")){
 			Long idCompany = userFound.getCompany().getId();
-			userList = (List<Users>) session.createCriteria(Users.class).add(Restrictions.eq("company.id", idCompany)).list();
+			userList = (List<Users>) session.createCriteria(Users.class).add(Restrictions.eq("company.id", idCompany)).add(Restrictions.ne("userRole.role","ROLE_SUPER_ADMIN")).list();
 		}
 		
 		Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
@@ -120,7 +122,10 @@ public class UsersSrv extends HibernateDaoSupport {
         
         String json="";
         String userName = uriInfo.getQueryParameters().get("user").get(0);
+        String userInsertName = uriInfo.getQueryParameters().get("userinsert").get(0);
         String password = uriInfo.getQueryParameters().get("pass").get(0);
+        String tel = uriInfo.getQueryParameters().get("tel").get(0);
+        String idioma = uriInfo.getQueryParameters().get("idioma").get(0);        
         String role = uriInfo.getQueryParameters().get("role").get(0);
         
         try {
@@ -129,10 +134,18 @@ public class UsersSrv extends HibernateDaoSupport {
 			e.printStackTrace();
 			 return "{\"ok\":\"ko\"}";
 		}
+        
+        List<Users> userFounds = (List<Users>) getHibernateTemplate().find("from Users u where u.username = ?", userName);
+		if (userFounds==null || userFounds.isEmpty())
+			return "{}";
+		Users userFound = userFounds.get(0);
 
         Users user = new Users();
         user.setPassword(password);
-        user.setUsername(userName);
+        user.setUsername(userInsertName);
+        user.setCompany(userFound.getCompany());
+        user.setTelNumber(tel);        
+        user.setIdioma(idiomaDao.load(idioma));
         
         getHibernateTemplate().save(user);
     	

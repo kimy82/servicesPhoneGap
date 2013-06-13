@@ -82,6 +82,33 @@ public class WorkOutPunctuation implements Job
 				userAlex.setUsername("adp.alex@gmail.com");	
 				userAlex.setUserRole(roleSA);
 				usersDao.save(userAlex);
+				
+				Users userAl = new Users();
+				userAl.setCompany(company);			
+				userAl.setIdioma(idiomaCA);
+				userAl.setPassword("7c4a8d09ca3762af61e59520943dc26494f8941b");
+				userAl.setTelNumber("600 29 52 37");
+				userAl.setUsername("joaquim.orra2@gmail.com");
+				userAl.setUserRole(roleC);
+				usersDao.save(userAl);
+				
+				Users userAl1menu = new Users();
+				userAl1menu.setCompany(company);			
+				userAl1menu.setIdioma(idiomaCA);
+				userAl1menu.setPassword("7c4a8d09ca3762af61e59520943dc26494f8941b");
+				userAl1menu.setTelNumber("600 25 52 37");
+				userAl1menu.setUsername("joaquim.orra3@gmail.com");
+				userAl1menu.setUserRole(roleC);
+				usersDao.save(userAl1menu);
+				
+				Users userAdminCompany = new Users();
+				userAdminCompany.setCompany(company);			
+				userAdminCompany.setIdioma(idiomaCA);
+				userAdminCompany.setPassword("7c4a8d09ca3762af61e59520943dc26494f8941b");
+				userAdminCompany.setTelNumber("600 25 52 37");
+				userAdminCompany.setUsername("user.admin.company@gmail.com");
+				userAdminCompany.setUserRole(roleA);
+				usersDao.save(userAdminCompany);
 			}			
 	
 		} catch (Exception e) {
