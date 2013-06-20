@@ -2,17 +2,19 @@
 package com.online.model;
 
 import java.io.Serializable;
+import java.util.List;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToOne;
-import javax.persistence.PrimaryKeyJoinColumn;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
 
 import com.google.gson.annotations.Expose;
 
@@ -25,7 +27,8 @@ public class Company implements Serializable{
 	 */
 	private static final long	serialVersionUID	= 1L;
 
-	private Long				id;
+	@Expose
+	private Integer				id;
 
 	@Expose
 	private String				name;
@@ -36,9 +39,8 @@ public class Company implements Serializable{
 	
 	private String				desc_ca;
 	
-	private Image				image;
-	
-	private Video				video;
+	private List<Category>      categories;
+
 
 	// CONSTRUCTORS
 	public Company() {
@@ -48,12 +50,12 @@ public class Company implements Serializable{
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "COMPANY_ID", unique = true, nullable = false)
-	public Long getId(){
+	public Integer getId(){
 
 		return id;
 	}
 
-	public void setId( Long id ){
+	public void setId( Integer id ){
 
 		this.id = id;
 	}
@@ -103,28 +105,42 @@ public class Company implements Serializable{
 		this.desc_ca = desc_ca;
 	}
 
-	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@PrimaryKeyJoinColumn
-	public Image getImage(){
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "company")
+	@Cascade({CascadeType.ALL})
+	public List<Category> getCategories(){
 	
-		return image;
+		return categories;
 	}
 
-	public void setImage( Image image ){
+	public void setCategories( List<Category> categories ){
 	
-		this.image = image;
+		this.categories = categories;
 	}
+	
+	
 
-	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@PrimaryKeyJoinColumn
-	public Video getVideo(){
-	
-		return video;
-	}
-
-	public void setVideo( Video video ){
-	
-		this.video = video;
-	}
+//	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+//	@PrimaryKeyJoinColumn
+//	public Image getImage(){
+//	
+//		return image;
+//	}
+//
+//	public void setImage( Image image ){
+//	
+//		this.image = image;
+//	}
+//
+//	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+//	@PrimaryKeyJoinColumn
+//	public Video getVideo(){
+//	
+//		return video;
+//	}
+//
+//	public void setVideo( Video video ){
+//	
+//		this.video = video;
+//	}
 	
 }

@@ -23,6 +23,8 @@ http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 		<property name="annotatedClasses">
 			<list>
 				<value>com.online.model.Category</value>
+				<value>com.online.model.SubCategory</value>
+				<value>com.online.model.SubSubCategory</value>
 				<value>com.online.model.Company</value>
 				<value>com.online.model.Idioma</value>
 				<value>com.online.model.Image</value>

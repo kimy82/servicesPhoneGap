@@ -43,6 +43,9 @@
 	<bean id="usersSrv" class="com.online.restful.UsersSrv" >
 	    <property name="sessionFactory" ref="sessionFactory"></property>
 	    <property name="usersDao" ref="usersDao"></property>
+	    <property name="idiomaDao" ref="idiomaDao"></property>
+	    <property name="categoryDao" ref="categoryDao"></property>	 
+	    <property name="companyDao" ref="companyDao" />   
 	</bean>
 	<!-- DAOS -->
 	<bean id="usersDao" class="com.online.dao.impl.UsersDaoImpl" >
@@ -51,7 +54,10 @@
    <bean id="companyDao" class="com.online.dao.impl.CompanyDaoImpl" >
    		<property name="sessionFactory" ref="sessionFactory"></property>
    </bean>
-    <bean id="idiomaDao" class="com.online.dao.impl.IdiomaDaoImpl" >
+   <bean id="idiomaDao" class="com.online.dao.impl.IdiomaDaoImpl" >
+   		<property name="sessionFactory" ref="sessionFactory"></property>
+   </bean>
+    <bean id="categoryDao" class="com.online.dao.impl.CategoryDaoImpl" >
    		<property name="sessionFactory" ref="sessionFactory"></property>
    </bean>
 	<!-- bookmarks.customPropertiesFactory defines loaded of the custom properties file -->
@@ -87,7 +93,8 @@
                  <entry key="entorn" value="local" />
                  <entry key="usersDao" value-ref="usersDao" /> 
                  <entry key="companyDao" value-ref="companyDao" />
-                 <entry key="idiomaDao" value-ref="idiomaDao" />                
+                 <entry key="idiomaDao" value-ref="idiomaDao" /> 
+                 <entry key="categoryDao" value-ref="categoryDao"/>	                   
             </map>
         </property>
     </bean>

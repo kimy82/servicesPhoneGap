@@ -1,14 +1,21 @@
 package com.online.crons;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
+import com.online.dao.CategoryDao;
 import com.online.dao.CompanyDao;
 import com.online.dao.IdiomaDao;
 import com.online.dao.UsersDao;
+import com.online.model.Category;
 import com.online.model.Company;
 import com.online.model.Idioma;
+import com.online.model.SubCategory;
+import com.online.model.SubSubCategory;
 import com.online.model.UserRole;
 import com.online.model.Users;
 
@@ -23,6 +30,8 @@ public class WorkOutPunctuation implements Job
 		UsersDao usersDao = (UsersDao)context.getJobDetail().getJobDataMap().get("usersDao");
 		CompanyDao companyDao = (CompanyDao)context.getJobDetail().getJobDataMap().get("companyDao");
 		IdiomaDao idiomaDao = (IdiomaDao)context.getJobDetail().getJobDataMap().get("idiomaDao");
+		CategoryDao categoryDao = (CategoryDao)context.getJobDetail().getJobDataMap().get("categoryDao");
+		
 		String entorn = (String)context.getJobDetail().getJobDataMap().get("entorn");
 		
 		
@@ -109,6 +118,51 @@ public class WorkOutPunctuation implements Job
 				userAdminCompany.setUsername("user.admin.company@gmail.com");
 				userAdminCompany.setUserRole(roleA);
 				usersDao.save(userAdminCompany);
+				
+				//Creem categories 
+				SubCategory subCategory11 = new SubCategory("subCategory11");	
+				
+				SubSubCategory subsubcat11 = new SubSubCategory("subsubcat11");
+				subsubcat11.setSubCategory(subCategory11);
+				SubSubCategory subsubcat12 = new SubSubCategory("subsubcat12");		
+				subsubcat12.setSubCategory(subCategory11);
+				List<SubSubCategory> subSubCategoryList = new ArrayList<SubSubCategory>();
+				subSubCategoryList.add(subsubcat11);
+				subSubCategoryList.add(subsubcat12);
+				
+				SubCategory subCategory12 = new SubCategory("subCategory12");
+				SubSubCategory subsubcat13 = new SubSubCategory("subsubcat13");
+				subsubcat13.setSubCategory(subCategory12);
+				SubSubCategory subsubcat14 = new SubSubCategory("subsubcat14");	
+				subsubcat14.setSubCategory(subCategory12);
+				List<SubSubCategory> subSubCategoryList2 = new ArrayList<SubSubCategory>();
+				subSubCategoryList2.add(subsubcat13);
+				subSubCategoryList2.add(subsubcat14);
+				
+				Category category1 = new Category(company,"category1");
+				
+							
+				subCategory11.setSubSubCategories(subSubCategoryList);
+				subCategory11.setCategory(category1);
+				
+							
+				subCategory12.setSubSubCategories(subSubCategoryList2);
+				subCategory12.setCategory(category1);
+				
+				List<SubCategory> subCategoryList = new ArrayList<SubCategory>();
+				subCategoryList.add(subCategory11);
+				subCategoryList.add(subCategory12);
+				
+				
+				category1.setSubCategories(subCategoryList);
+				
+				Category category2 = new Category(company,"category2");
+				
+				
+				categoryDao.save(category1);
+				categoryDao.save(category2);
+				
+				
 			}			
 	
 		} catch (Exception e) {

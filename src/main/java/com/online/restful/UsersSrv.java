@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
@@ -40,10 +41,17 @@ import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.online.dao.CategoryDao;
+import com.online.dao.CompanyDao;
 import com.online.dao.IdiomaDao;
 import com.online.dao.UsersDao;
+import com.online.model.Category;
+import com.online.model.Company;
+import com.online.model.SubCategory;
+import com.online.model.SubSubCategory;
 import com.online.model.UserRole;
 import com.online.model.Users;
+import com.online.pojos.CategoriesTO;
 import com.online.utils.Constants;
 import com.online.utils.Utils;
 
@@ -53,6 +61,8 @@ public class UsersSrv extends HibernateDaoSupport {
 	
 	UsersDao usersDao;
 	IdiomaDao idiomaDao;
+	CategoryDao categoryDao;
+	CompanyDao companyDao;
    
     @GET
     @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
@@ -75,14 +85,14 @@ public class UsersSrv extends HibernateDaoSupport {
 		if(userFound.getUserRole().getRole().equals("ROLE_SUPER_ADMIN")){
 			userList = (List<Users>) session.createQuery("from Users").list();		
 		}else if (userFound.getUserRole().getRole().equals("ROLE_ADMIN")){
-			Long idCompany = userFound.getCompany().getId();
+			Integer idCompany = userFound.getCompany().getId();
 			userList = (List<Users>) session.createCriteria(Users.class).add(Restrictions.eq("company.id", idCompany)).add(Restrictions.ne("userRole.role","ROLE_SUPER_ADMIN")).list();
 		}
 		
 		Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
 		json = gson.toJson(userList);
 		
-		session.close();
+		session.close(); 
 		
         return json;
     }
@@ -104,8 +114,7 @@ public class UsersSrv extends HibernateDaoSupport {
 		
 		Session session = this.getSessionFactory().openSession();
 		session.beginTransaction();
-		Users userToDelete = (Users) session.load(Users.class, userFound.getId());
-		session.delete(userToDelete.getUserRole());
+		Users userToDelete = (Users) session.load(Users.class, userFound.getId());		
 		session.delete(userToDelete);
 		session.getTransaction().commit();
 		session.close();
@@ -147,7 +156,7 @@ public class UsersSrv extends HibernateDaoSupport {
         user.setTelNumber(tel);        
         user.setIdioma(idiomaDao.load(idioma));
         
-        getHibernateTemplate().save(user);
+        
     	
 		UserRole userRole = new UserRole();
 		if(role==null || role.equals("null")){
@@ -160,7 +169,8 @@ public class UsersSrv extends HibernateDaoSupport {
 			userRole = usersDao.loadRole(Constants.ROLE_CLIENT);
 		}
 
-		getHibernateTemplate().save(userRole);
+		user.setUserRole(userRole);
+		getHibernateTemplate().save(user);
 		
         return "{\"ok\":\"ok\"}";
     }
@@ -190,7 +200,7 @@ public class UsersSrv extends HibernateDaoSupport {
 				
 				String role = user.getUserRole()==null? "ROLE_CLIENT" : user.getUserRole().getRole();
 				String company = user.getCompany().getName();
-				Long companyId = user.getCompany().getId();
+				Integer companyId = user.getCompany().getId();
 				String idioma = user.getIdioma()==null? "CA":user.getIdioma().getName();
 				
 				json="{\"ok\":\"ok\" , \"username\" : \""+userName+"\" , \"password\" : \""+password+"\", \"role\" : \""+role+"\", \"companyName\":\""+company+"\", \"companyId\":\""+companyId+"\", \"idioma\":\""+idioma+"\"}";
@@ -207,7 +217,298 @@ public class UsersSrv extends HibernateDaoSupport {
 		}
     }
     
+    
+    
     @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/categoryFill")
+    public String categoryFill(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        String json="";
+	        String companyId = uriInfo.getQueryParameters().get("companyId").get(0);
+	        
+	        if(companyId==null || companyId.equals("") || companyId.equals("null")|| companyId.equals("standard") ){
+	        	return "{\"ok\":\"ko\"}";
+	        }
+	        Session session = this.getSessionFactory().openSession();
+			session.beginTransaction();
+			
+			List<Category> categoryList = session.createCriteria(Category.class).add(Restrictions.eq("company.id", Integer.parseInt(companyId))).list();
+			
+			
+			if(categoryList==null || categoryList.isEmpty()){
+				return "{}";
+			}else{
+				List<CategoriesTO> categoriesTOList = new ArrayList<CategoriesTO>();
+				for(Category category : categoryList){
+					CategoriesTO catTo = new CategoriesTO(category.getName(),"N0",null,category.getId());
+					categoriesTOList.add(catTo);
+					getHibernateTemplate().initialize(category.getSubCategories());
+					for(SubCategory subCategory : category.getSubCategories()){
+						CategoriesTO catSubTo = new CategoriesTO(subCategory.getName(),"N1",category.getId().toString(),subCategory.getId());
+						categoriesTOList.add(catSubTo);
+						getHibernateTemplate().initialize(subCategory.getSubSubCategories());
+						for(SubSubCategory subSubCategory : subCategory.getSubSubCategories()){
+							CategoriesTO catSubSubTo = new CategoriesTO(subSubCategory.getName(),"N2",subCategory.getId().toString(),subSubCategory.getId());
+							categoriesTOList.add(catSubSubTo);														
+						}
+					}
+					
+				}	
+				
+				Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().excludeFieldsWithoutExposeAnnotation().create();
+				json = gson.toJson(categoriesTOList);
+			}									
+			session.close();
+			
+	        return json;
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		}
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/companyFill")
+    public String companyFill(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        String json="";
+	        
+	        Session session = this.getSessionFactory().openSession();
+			session.beginTransaction();
+			
+			List<Company> companyList = this.companyDao.getAll();
+			
+			
+			if(companyList==null || companyList.isEmpty()){
+				return "{}";
+			}else{								
+				Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().excludeFieldsWithoutExposeAnnotation().create();
+				json = gson.toJson(companyList);
+			}									
+			session.close();
+			
+	        return json;
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		}
+    }
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/deleteCompany")
+    public String deleteCompany(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        String json="";
+	        
+	        String companyId = uriInfo.getQueryParameters().get("companyId").get(0);
+	        
+	        Session session = this.getSessionFactory().openSession();
+			session.beginTransaction();
+			
+			Company company = this.companyDao.load(Integer.parseInt(companyId));
+			
+			this.companyDao.delete(company);
+										
+			session.close();
+			
+			return "{\"ok\":\"ok\"}";
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		}
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/creaCompany")
+    public String creaCompany(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        String json="";
+	        
+	        String name = uriInfo.getQueryParameters().get("name").get(0);
+	        
+	        Session session = this.getSessionFactory().openSession();
+			session.beginTransaction();
+			
+			Company company = new Company();
+			company.setName(name);
+			company.setDesc_ca("");
+			company.setDesc_en("");
+			company.setDesc_es("");
+					
+			this.companyDao.save(company);
+			
+			
+										
+			session.close();
+			
+			return "{\"ok\":\"ok\" , \"id\":\""+company.getId()+"\"}";
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		}
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/createCategory")
+    public String createCategory(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        
+	        String companyId = uriInfo.getQueryParameters().get("companyId").get(0);
+	        String name = uriInfo.getQueryParameters().get("name").get(0);
+	        if(name==null || name.equals("") || companyId==null || companyId.equals("")){
+	        	return "{\"ok\":\"ko\"}";
+	        }
+	        	        
+			Company company = this.companyDao.load(Integer.parseInt(companyId));
+			Category category = new Category(company,name);
+			this.categoryDao.save(category);
+			
+			
+			return "{\"ok\":\"ok\", \"id\":\""+category.getId()+"\"}";
+			
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		} 
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/createSubCategory")
+    public String createSubCategory(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        
+	        String companyId = uriInfo.getQueryParameters().get("companyId").get(0);
+	        String name = uriInfo.getQueryParameters().get("name").get(0);
+	        String namesuper = uriInfo.getQueryParameters().get("namesuper").get(0);
+	        
+	        if(name==null || name.equals("") || companyId==null || companyId.equals("")){
+	        	return "{\"ok\":\"ko\"}";
+	        }
+	        
+	        SubCategory subCategory = new SubCategory(name);
+			Company company = this.companyDao.load(Integer.parseInt(companyId));
+			Category category = this.categoryDao.load(new Long(namesuper));
+			subCategory.setCategory(category);
+			this.categoryDao.saveSubCategory(subCategory);
+			
+			return "{\"ok\":\"ok\",  \"id\":\""+subCategory.getId()+"\"}";
+			
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		} 
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/createSubSubCategory")
+    public String createSubSubCategory(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        
+	        String companyId = uriInfo.getQueryParameters().get("companyId").get(0);
+	        String name = uriInfo.getQueryParameters().get("name").get(0);
+	        String namesuper = uriInfo.getQueryParameters().get("namesuper").get(0);
+	        
+	        if(name==null || name.equals("") || companyId==null || companyId.equals("")){
+	        	return "{\"ok\":\"ko\"}";
+	        }
+	        
+	        SubSubCategory subSubCategory = new SubSubCategory(name);
+			Company company = this.companyDao.load(Integer.parseInt(companyId));
+			SubCategory subCategory = this.categoryDao.loadSubCat(new Long(namesuper));
+			subSubCategory.setSubCategory(subCategory);
+			this.categoryDao.saveSubSubCategory(subSubCategory);
+			
+			return "{\"ok\":\"ok\",  \"id\":\""+subSubCategory.getId()+"\"}";
+			
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		} 
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/deleteSubSubCategory")
+    public String deleteSubSubCategory(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        
+    		String idSubSubCategory = uriInfo.getQueryParameters().get("idSubSubCategory").get(0);
+	        
+	        if(idSubSubCategory==null || idSubSubCategory.equals("")){
+	        	return "{\"ok\":\"ko\"}";
+	        }
+	        
+	        
+	    	SubSubCategory subSubCategory = this.categoryDao.loadSubSubCat(new Long(idSubSubCategory));
+	    	
+	    	this.categoryDao.deleteSubSubCategory(subSubCategory);	    		    		    	
+	    	
+			return "{\"ok\":\"ok\"}";
+			
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		} 
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/deleteSubCategory")
+    public String deleteSubCategory(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        
+    		String idSubCategory = uriInfo.getQueryParameters().get("idSubCategory").get(0);
+	        
+	        if(idSubCategory==null || idSubCategory.equals("")){
+	        	return "{\"ok\":\"ko\"}";
+	        }
+	        
+	        
+	    	SubCategory subCategory = this.categoryDao.loadSubCat(new Long(idSubCategory));
+	    	this.categoryDao.deleteSubCategory(subCategory);
+	      
+			return "{\"ok\":\"ok\"}";
+			
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		} 
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/deleteCategory")
+    public String deleteCategory(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        
+	        
+	        String idCategory = uriInfo.getQueryParameters().get("idCategory").get(0);
+	        
+	        
+	        if(idCategory==null || idCategory.equals("") ){
+	        	return "{\"ok\":\"ko\"}";
+	        }
+	        
+	        
+	        Category category = this.categoryDao.load(new Long(idCategory));
+	        this.categoryDao.delete(category);
+	      
+			return "{\"ok\":\"ok\"}";
+			
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		} 
+    }
+    
+    
+    @POST
     @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
     @Path("/video")
     public String video(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
@@ -222,7 +523,20 @@ public class UsersSrv extends HibernateDaoSupport {
 	
 		this.usersDao = usersDao;
 	}
-    
-    
 
+	public void setIdiomaDao( IdiomaDao idiomaDao ){
+	
+		this.idiomaDao = idiomaDao;
+	}
+
+	public void setCategoryDao( CategoryDao categoryDao ){
+	
+		this.categoryDao = categoryDao;
+	}
+
+	public void setCompanyDao( CompanyDao companyDao ){
+	
+		this.companyDao = companyDao;
+	}        
+	
 }

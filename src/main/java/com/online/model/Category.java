@@ -2,15 +2,20 @@
 package com.online.model;
 
 import java.io.Serializable;
+import java.util.List;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
 
 @Entity
 @Table( name="CATEGORIES" )
@@ -27,11 +32,25 @@ public class Category implements Serializable{
 
 	private String				name;
 	
-	private String				level="N0";
+	private List<SubCategory>   subCategories;
+	
+
+
 
 	// CONSTRUCTORS
 	public Category() {
 	}
+	
+	
+
+	public Category( Company company, String name ) {
+
+		super();
+		this.company = company;
+		this.name = name;
+	}
+
+
 
 	// GETTERS i SETTERS
 	@Id
@@ -58,7 +77,8 @@ public class Category implements Serializable{
 		this.name = name;
 	}
 
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
+	@Cascade({CascadeType.SAVE_UPDATE})
 	public Company getCompany(){
 	
 		return company;
@@ -69,14 +89,17 @@ public class Category implements Serializable{
 		this.company = company;
 	}
 
-	@Column(name = "CATEGORY_LEVEL", unique = false, nullable = false, length = 10)
-	public String getLevel(){
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "category")
+	@Cascade({CascadeType.ALL})
+	public List<SubCategory> getSubCategories(){
 	
-		return level;
+		return subCategories;
 	}
 
-	public void setLevel( String level ){
+	public void setSubCategories( List<SubCategory> subCategories ){
 	
-		this.level = level;
-	}	
+		this.subCategories = subCategories;
+	}
+	
+	
 }

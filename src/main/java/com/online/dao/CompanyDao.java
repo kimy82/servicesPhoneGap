@@ -15,6 +15,6 @@ public interface CompanyDao {
 	
 	List<Company> getAll();
 	
-	Company load( Long id );
+	Company load( Integer id );
 	
 }

@@ -36,10 +36,10 @@ public class CompanyDaoImpl extends HibernateDaoSupport implements CompanyDao{
 		
 	}
 
-	public Company load( Long id ){
+	public Company load( Integer  id ){
 
-		// TODO Auto-generated method stub
-		return null;
+		
+		return getHibernateTemplate().load(Company.class,id);
 	}
 
 }
