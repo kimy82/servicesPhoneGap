@@ -46,6 +46,7 @@
 	    <property name="idiomaDao" ref="idiomaDao"></property>
 	    <property name="categoryDao" ref="categoryDao"></property>	 
 	    <property name="companyDao" ref="companyDao" />   
+	    <property name="notificacioDao" ref="notificacioDao" />   
 	</bean>
 	<!-- DAOS -->
 	<bean id="usersDao" class="com.online.dao.impl.UsersDaoImpl" >
@@ -58,6 +59,9 @@
    		<property name="sessionFactory" ref="sessionFactory"></property>
    </bean>
     <bean id="categoryDao" class="com.online.dao.impl.CategoryDaoImpl" >
+   		<property name="sessionFactory" ref="sessionFactory"></property>
+   </bean>
+      <bean id="notificacioDao" class="com.online.dao.impl.NotificacioDaoImpl" >
    		<property name="sessionFactory" ref="sessionFactory"></property>
    </bean>
 	<!-- bookmarks.customPropertiesFactory defines loaded of the custom properties file -->

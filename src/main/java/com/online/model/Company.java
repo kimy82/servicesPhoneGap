@@ -11,6 +11,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Cascade;
@@ -40,6 +42,8 @@ public class Company implements Serializable{
 	private String				desc_ca;
 	
 	private List<Category>      categories;
+	
+	private Image				img;
 
 
 	// CONSTRUCTORS
@@ -116,31 +120,19 @@ public class Company implements Serializable{
 	
 		this.categories = categories;
 	}
+
+//	@OneToOne(fetch = FetchType.EAGER)
+//	@Cascade({CascadeType.ALL})
+//	public Image getImg(){
+//	
+//		return img;
+//	}
+//
+//	public void setImg( Image img ){	
+//		this.img = img;
+//	}
 	
 	
 
-//	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-//	@PrimaryKeyJoinColumn
-//	public Image getImage(){
-//	
-//		return image;
-//	}
-//
-//	public void setImage( Image image ){
-//	
-//		this.image = image;
-//	}
-//
-//	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-//	@PrimaryKeyJoinColumn
-//	public Video getVideo(){
-//	
-//		return video;
-//	}
-//
-//	public void setVideo( Video video ){
-//	
-//		this.video = video;
-//	}
 	
 }

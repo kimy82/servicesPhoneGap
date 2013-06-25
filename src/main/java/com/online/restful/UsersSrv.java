@@ -20,19 +20,28 @@
 
 package com.online.restful;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.wink.common.annotations.Workspace;
+import org.apache.wink.common.internal.utils.MediaTypeUtils;
+import org.apache.wink.common.model.multipart.InMultiPart;
+import org.apache.wink.common.model.multipart.InPart;
 import org.apache.wink.server.utils.LinkBuilders;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -44,14 +53,19 @@ import com.google.gson.GsonBuilder;
 import com.online.dao.CategoryDao;
 import com.online.dao.CompanyDao;
 import com.online.dao.IdiomaDao;
+import com.online.dao.NotificacioDao;
 import com.online.dao.UsersDao;
 import com.online.model.Category;
 import com.online.model.Company;
+import com.online.model.Image;
+import com.online.model.Notificacio;
 import com.online.model.SubCategory;
 import com.online.model.SubSubCategory;
 import com.online.model.UserRole;
 import com.online.model.Users;
 import com.online.pojos.CategoriesTO;
+import com.online.pojos.NotificacioTO;
+import com.online.pojos.UsersTO;
 import com.online.utils.Constants;
 import com.online.utils.Utils;
 
@@ -63,6 +77,7 @@ public class UsersSrv extends HibernateDaoSupport {
 	IdiomaDao idiomaDao;
 	CategoryDao categoryDao;
 	CompanyDao companyDao;
+	NotificacioDao notificacioDao;
    
     @GET
     @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
@@ -82,15 +97,22 @@ public class UsersSrv extends HibernateDaoSupport {
         Session session = this.getSessionFactory().openSession();
 		session.beginTransaction();
 		List<Users> userList = new ArrayList<Users>();
+		List<UsersTO> userTOList = new ArrayList<UsersTO>();
 		if(userFound.getUserRole().getRole().equals("ROLE_SUPER_ADMIN")){
 			userList = (List<Users>) session.createQuery("from Users").list();		
 		}else if (userFound.getUserRole().getRole().equals("ROLE_ADMIN")){
 			Integer idCompany = userFound.getCompany().getId();
 			userList = (List<Users>) session.createCriteria(Users.class).add(Restrictions.eq("company.id", idCompany)).add(Restrictions.ne("userRole.role","ROLE_SUPER_ADMIN")).list();
+		}else if(userFound.getUserRole().getRole().equals("ROLE_CLIENT")) {
+			Integer idCompany = userFound.getCompany().getId();
+			userList = (List<Users>) session.createCriteria(Users.class).add(Restrictions.eq("company.id", idCompany)).add(Restrictions.ne("userRole.role","ROLE_CLIENT")).list();
+		}
+		for(Users user : userList){
+			userTOList.add(new UsersTO(user.getUsername(),user.getUserRole().getRole()));
 		}
 		
 		Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
-		json = gson.toJson(userList);
+		json = gson.toJson(userTOList);
 		
 		session.close(); 
 		
@@ -353,6 +375,67 @@ public class UsersSrv extends HibernateDaoSupport {
     
     @GET
     @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/getNotificacions")
+    public String getNotificacions(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        String json="";
+	        
+	        String user = uriInfo.getQueryParameters().get("user").get(0);
+	        
+	       List<Notificacio> notifList = this.notificacioDao.findByUsername(user);
+	       List<NotificacioTO> notifTOList = new ArrayList<NotificacioTO>();
+	       
+	       for(Notificacio notif : notifList){
+	    	   if(user.equals(notif.getUser2().getUsername()) && notif.isRecieved()==false){
+	    		   notif.setRecieved(true);
+	    		   this.notificacioDao.update(notif);
+	    	   }
+	    	   NotificacioTO notiTO = new NotificacioTO(notif.getId(),notif.getUser1().getUsername(),notif.getUser2().getUsername(),notif.getNotificacio(),notif.isSent(),notif.isRecieved(),Utils.formatDateDDMMYYYY(notif.getData()));
+	    	   notifTOList.add(notiTO);
+	       }
+	       Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().excludeFieldsWithoutExposeAnnotation().create();
+			json = gson.toJson(notifTOList);
+			return json;
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		}
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/sentNotif")
+    public String sentNotif(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        String json="";
+	        
+	        String userS = uriInfo.getQueryParameters().get("user").get(0);
+	        String userToS = uriInfo.getQueryParameters().get("userTo").get(0);
+	        String notif = uriInfo.getQueryParameters().get("notif").get(0);
+	        
+	        Notificacio noti = new Notificacio();
+	        noti.setData(new Date());
+	        noti.setNotificacio(notif);
+	        noti.setSent(true);
+	        noti.setRecieved(false);
+	        noti.setUser1(this.usersDao.findByUsername(userS));
+	        noti.setUser2(this.usersDao.findByUsername(userToS));
+	        
+	        this.notificacioDao.save(noti);
+	        
+	   
+	        NotificacioTO notiTO = new NotificacioTO(noti.getId(),userS,userToS,notif,true,false,Utils.formatDateDDMMYYYY(noti.getData()));
+	        Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().excludeFieldsWithoutExposeAnnotation().create();
+			json = gson.toJson(notiTO);
+			return json;
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		}
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
     @Path("/createCategory")
     public String createCategory(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
     	try {
@@ -518,6 +601,36 @@ public class UsersSrv extends HibernateDaoSupport {
 		
         return "{\"ok\":\"ok\"}";
     }
+    
+    @POST
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Consumes( MediaTypeUtils.MULTIPART_FORM_DATA)
+    @Path("/uploadFoto")
+    public String uploadFoto(InMultiPart inMP) throws IOException {
+        
+    	 while (inMP.hasNext()) {
+    	        InPart part = inMP.next();
+    	        MultivaluedMap<String, String> heades = part.getHeaders();
+    	        String CDHeader = heades.getFirst("Content-Disposition");
+    	        InputStream is = part.getBody(InputStream.class, null);
+    	       
+    	      
+    	        byte[] bytes = IOUtils.toByteArray(is);    	        
+    	        Image img = new Image();
+    	        img.setImage(bytes);
+    	        img.setName("comapny_pre");
+    	        // use the input stream to read the part body
+    	    	Session session = this.getSessionFactory().openSession();
+    			session.beginTransaction();
+    			session.save(img);		    			
+    			session.getTransaction().commit();
+    			session.close();
+    			
+    	    }
+
+		
+        return "{\"ok\":\"ok\"}";
+    }
 
 	public void setUsersDao( UsersDao usersDao ){
 	
@@ -537,6 +650,13 @@ public class UsersSrv extends HibernateDaoSupport {
 	public void setCompanyDao( CompanyDao companyDao ){
 	
 		this.companyDao = companyDao;
+	}
+
+	public void setNotificacioDao( NotificacioDao notificacioDao ){
+	
+		this.notificacioDao = notificacioDao;
 	}        
+	
+	
 	
 }

@@ -2,8 +2,8 @@
 package com.online.model;
 
 import java.io.Serializable;
+import java.util.List;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -11,8 +11,11 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
 
 import com.google.gson.annotations.Expose;
 
@@ -26,7 +29,7 @@ public class Users implements Serializable{
 	private static final long	serialVersionUID	= 1L;
 
 	private Long				id;
-
+    
 	@Expose
 	private String				username;
 
@@ -39,6 +42,10 @@ public class Users implements Serializable{
 	private Company				company;
 	
 	private Idioma				idioma;
+	
+	private List<Notificacio>   notificacions;
+	
+	private List<Notificacio>   notificacionsToMe;
 
 	// CONSTRUCTORS
 	public Users( String username ) {
@@ -88,7 +95,8 @@ public class Users implements Serializable{
 		this.password = password;
 	}
 	
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
+	@Cascade({})
 	public UserRole getUserRole(){
 		return userRole;
 	}
@@ -110,7 +118,8 @@ public class Users implements Serializable{
 	}
 	
 	
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
+	@Cascade({})
 	public Company getCompany(){
 	
 		return company;
@@ -121,7 +130,8 @@ public class Users implements Serializable{
 		this.company = company;
 	}				
 	
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
+	@Cascade({})
 	public Idioma getIdioma(){
 	
 		return idioma;
@@ -131,5 +141,31 @@ public class Users implements Serializable{
 	
 		this.idioma = idioma;
 	}
+
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "user1")
+	@Cascade({})
+	public List<Notificacio> getNotificacions(){
+	
+		return notificacions;
+	}
+
+	public void setNotificacions( List<Notificacio> notificacions ){
+	
+		this.notificacions = notificacions;
+	}
+
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "user2")
+	@Cascade({})
+	public List<Notificacio> getNotificacionsToMe(){
+	
+		return notificacionsToMe;
+	}
+
+	public void setNotificacionsToMe( List<Notificacio> notificacionsToMe ){
+	
+		this.notificacionsToMe = notificacionsToMe;
+	}
+	
+	
 
 }

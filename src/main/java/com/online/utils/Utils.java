@@ -2,6 +2,8 @@ package com.online.utils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Utils{
 
@@ -21,5 +23,11 @@ public class Utils{
 			hexString.append(hex);
 		}
 		return hexString.toString();
+	}
+	
+	public static String formatDateDDMMYYYY(Date data){
+		SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy");
+		return df.format(data);
+		
 	}
 }

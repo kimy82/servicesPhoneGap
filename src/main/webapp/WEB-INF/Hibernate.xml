@@ -31,6 +31,7 @@ http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 				<value>com.online.model.Product</value>
 				<value>com.online.model.Users</value>
 				<value>com.online.model.UserRole</value>
+				<value>com.online.model.Notificacio</value>
 				<value>com.online.model.Video</value>
 			</list>
     	</property>
