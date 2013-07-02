@@ -43,7 +43,7 @@ public class Image implements Serializable{
 		this.id = id;
 	}
 	
-	@Column(name = "IMAGE", unique = false, nullable = false)
+	@Column(name = "IMAGE",columnDefinition="MEDIUMBLOB", unique = false, nullable = false)
 	public byte[] getImage(){
 	
 		return image;

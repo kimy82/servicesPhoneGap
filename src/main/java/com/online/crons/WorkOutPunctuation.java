@@ -59,6 +59,7 @@ public class WorkOutPunctuation implements Job
 				company.setDesc_ca("És la millor que existeix");
 				company.setDesc_en("It's the best in the market");
 				company.setDesc_es("Es la mejor que existe");
+				company.setHtml("");
 				company.setName("ALEXMANY");
 				
 				companyDao.save(company);
@@ -68,6 +69,7 @@ public class WorkOutPunctuation implements Job
 				company2.setDesc_ca("(BIS) És la millor que existeix");
 				company2.setDesc_en("(BIS) It's the best in the market");
 				company2.setDesc_es("(BIS) Es la mejor que existe");
+				company2.setHtml("");
 				company2.setName("ALEXMANY_bis");
 				
 				companyDao.save(company2);

@@ -41,9 +41,13 @@ public class Company implements Serializable{
 	
 	private String				desc_ca;
 	
+	private String				html;
+	
 	private List<Category>      categories;
 	
 	private Image				img;
+	
+	private Image				img2;
 
 
 	// CONSTRUCTORS
@@ -121,16 +125,38 @@ public class Company implements Serializable{
 		this.categories = categories;
 	}
 
-//	@OneToOne(fetch = FetchType.EAGER)
-//	@Cascade({CascadeType.ALL})
-//	public Image getImg(){
-//	
-//		return img;
-//	}
-//
-//	public void setImg( Image img ){	
-//		this.img = img;
-//	}
+	@OneToOne(fetch = FetchType.EAGER)
+	@Cascade({CascadeType.ALL})
+	public Image getImg(){
+	
+		return img;
+	}
+
+	public void setImg( Image img ){	
+		this.img = img;
+	}
+	
+	@OneToOne(fetch = FetchType.EAGER)
+	@Cascade({CascadeType.ALL})
+	public Image getImg2(){
+	
+		return img2;
+	}
+
+	public void setImg2( Image img2 ){	
+		this.img2 = img2;
+	}
+
+	@Column(name = "COMPANY_HTML", unique = false, nullable = true, length = 4000)
+	public String getHtml(){
+	
+		return html;
+	}
+
+	public void setHtml( String html ){
+	
+		this.html = html;
+	}
 	
 	
 

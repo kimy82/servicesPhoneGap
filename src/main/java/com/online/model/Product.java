@@ -3,7 +3,6 @@ package com.online.model;
 
 import java.io.Serializable;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -14,6 +13,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
+
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
 
 import com.google.gson.annotations.Expose;
 
@@ -38,17 +40,21 @@ public class Product implements Serializable{
 	
 	private Image				image;
 	
-	private Video				video;
+	//private Video				video;
 	
-	private Category			n0Category;
+	private Category			category;
 	
-	private Category			n1Category;
+	private SubCategory			subCategory;
 	
-	private Category			n2Category;
+	private SubSubCategory		subsubCategory;
 
-	private Idioma				idioma;
+	private Idioma				idioma;	
 	
-	private String				config;
+	private Image				img;
+	
+	private Image				img2;
+	
+	private String 				html;
 	
 	// CONSTRUCTORS
 	public Product() {
@@ -57,7 +63,7 @@ public class Product implements Serializable{
 	// GETTERS i SETTERS
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "PRODUCT_ID", unique = true, nullable = false)
+	@Column(name = "PRODUCT_ID", unique = true, nullable = false, columnDefinition="BIGINT" )
 	public Long getId(){
 
 		return id;
@@ -91,19 +97,19 @@ public class Product implements Serializable{
 		this.image = image;
 	}
 
-	@OneToOne(fetch = FetchType.EAGER)
-	@PrimaryKeyJoinColumn
-	public Video getVideo(){
-	
-		return video;
-	}
+//	@OneToOne(fetch = FetchType.EAGER)
+//	@PrimaryKeyJoinColumn
+//	public Video getVideo(){
+//	
+//		return video;
+//	}
+//
+//	public void setVideo( Video video ){
+//	
+//		this.video = video;
+//	}
 
-	public void setVideo( Video video ){
-	
-		this.video = video;
-	}
-
-	@Column(name = "PRODUCT_DESC", unique = false, nullable = false, length = 200)
+	@Column(name = "PRODUCT_DESC", unique = false, nullable = true, length = 200)
 	public String getDescripcio(){
 	
 		return descripcio;
@@ -114,7 +120,8 @@ public class Product implements Serializable{
 		this.descripcio = descripcio;
 	}
 
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
+	@Cascade({})
 	public Company getCompany(){
 	
 		return company;
@@ -125,40 +132,46 @@ public class Product implements Serializable{
 		this.company = company;
 	}
 
-	@ManyToOne(cascade = CascadeType.ALL)
-	public Category getN0Category(){
+
+	@ManyToOne
+	@Cascade({})
+	public Category getCategory(){
 	
-		return n0Category;
+		return category;
 	}
 
-	public void setN0Category( Category n0Category ){
 	
-		this.n0Category = n0Category;
+	public void setCategory( Category category ){
+	
+		this.category = category;
 	}
 
-	@ManyToOne(cascade = CascadeType.ALL)
-	public Category getN1Category(){
+	@ManyToOne
+	@Cascade({})
+	public SubCategory getSubCategory(){
 	
-		return n1Category;
+		return subCategory;
 	}
 
-	public void setN1Category( Category n1Category ){
+	public void setSubCategory( SubCategory subCategory ){
 	
-		this.n1Category = n1Category;
+		this.subCategory = subCategory;
 	}
 
-	@ManyToOne(cascade = CascadeType.ALL)
-	public Category getN2Category(){
+	@ManyToOne
+	@Cascade({})
+	public SubSubCategory getSubsubCategory(){
 	
-		return n2Category;
+		return subsubCategory;
 	}
 
-	public void setN2Category( Category n2Category ){
+	public void setSubsubCategory( SubSubCategory subsubCategory ){
 	
-		this.n2Category = n2Category;
+		this.subsubCategory = subsubCategory;
 	}
 
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
+	@Cascade({})
 	public Idioma getIdioma(){
 	
 		return idioma;
@@ -168,16 +181,38 @@ public class Product implements Serializable{
 	
 		this.idioma = idioma;
 	}
-
-	@Column(name = "PRODUCT_CONFIG_VIEW", unique = false, nullable = false, length = 4000)
-	public String getConfig(){
 	
-		return config;
+	@OneToOne(fetch = FetchType.EAGER)
+	@Cascade({CascadeType.ALL})
+	public Image getImg(){
+	
+		return img;
 	}
 
-	public void setConfig( String config ){
+	public void setImg( Image img ){	
+		this.img = img;
+	}
 	
-		this.config = config;
+	@OneToOne(fetch = FetchType.EAGER)
+	@Cascade({CascadeType.ALL})
+	public Image getImg2(){
+	
+		return img2;
+	}
+
+	public void setImg2( Image img2 ){	
+		this.img2 = img2;
+	}
+
+	@Column(name = "COMPANY_HTML", unique = false, nullable = true, length = 4000)
+	public String getHtml(){
+	
+		return html;
+	}
+
+	public void setHtml( String html ){
+	
+		this.html = html;
 	}
 	
 }

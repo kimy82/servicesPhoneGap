@@ -20,21 +20,28 @@
 
 package com.online.restful;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.io.IOUtils;
@@ -57,14 +64,18 @@ import com.online.dao.NotificacioDao;
 import com.online.dao.UsersDao;
 import com.online.model.Category;
 import com.online.model.Company;
+import com.online.model.Idioma;
 import com.online.model.Image;
 import com.online.model.Notificacio;
+import com.online.model.Product;
 import com.online.model.SubCategory;
 import com.online.model.SubSubCategory;
 import com.online.model.UserRole;
 import com.online.model.Users;
 import com.online.pojos.CategoriesTO;
+import com.online.pojos.HtmlTO;
 import com.online.pojos.NotificacioTO;
+import com.online.pojos.ProductTO;
 import com.online.pojos.UsersTO;
 import com.online.utils.Constants;
 import com.online.utils.Utils;
@@ -78,6 +89,8 @@ public class UsersSrv extends HibernateDaoSupport {
 	CategoryDao categoryDao;
 	CompanyDao companyDao;
 	NotificacioDao notificacioDao;
+	
+	final String host= "10.0.2.2:9090";
    
     @GET
     @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
@@ -606,23 +619,33 @@ public class UsersSrv extends HibernateDaoSupport {
     @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
     @Consumes( MediaTypeUtils.MULTIPART_FORM_DATA)
     @Path("/uploadFoto")
-    public String uploadFoto(InMultiPart inMP) throws IOException {
+    public String uploadFoto(InMultiPart inMP, @Context UriInfo uriInfo) throws IOException {
         
+    	String idCompany = uriInfo.getQueryParameters().get("companyId").get(0);
+    	String companyImg = uriInfo.getQueryParameters().get("id").get(0);
     	 while (inMP.hasNext()) {
     	        InPart part = inMP.next();
     	        MultivaluedMap<String, String> heades = part.getHeaders();
     	        String CDHeader = heades.getFirst("Content-Disposition");
     	        InputStream is = part.getBody(InputStream.class, null);
     	       
-    	      
+    	        
     	        byte[] bytes = IOUtils.toByteArray(is);    	        
     	        Image img = new Image();
     	        img.setImage(bytes);
     	        img.setName("comapny_pre");
+    	      
+    	        
     	        // use the input stream to read the part body
     	    	Session session = this.getSessionFactory().openSession();
     			session.beginTransaction();
-    			session.save(img);		    			
+    			Company company = (Company) session.load(Company.class,Integer.parseInt(idCompany) );
+    			if(companyImg!=null && companyImg.equals("companyImg1")){
+    				company.setImg(img);
+    			}else if (companyImg!=null && companyImg.equals("companyImg2")){
+    				company.setImg2(img);
+    			}
+    			session.update(company);		    			
     			session.getTransaction().commit();
     			session.close();
     			
@@ -630,6 +653,378 @@ public class UsersSrv extends HibernateDaoSupport {
 
 		
         return "{\"ok\":\"ok\"}";
+    }
+    
+    @POST
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Consumes( MediaTypeUtils.MULTIPART_FORM_DATA)
+    @Path("/uploadFotoProduct")
+    public String uploadFotoProduct(InMultiPart inMP, @Context UriInfo uriInfo) throws IOException {
+        
+    	
+    	String idProduct = uriInfo.getQueryParameters().get("idProduct").get(0);
+    	String productImg = uriInfo.getQueryParameters().get("id").get(0);
+    	
+    	 while (inMP.hasNext()) {
+    	        InPart part = inMP.next();
+    	        MultivaluedMap<String, String> heades = part.getHeaders();
+    	        String CDHeader = heades.getFirst("Content-Disposition");
+    	        InputStream is = part.getBody(InputStream.class, null);
+    	       
+    	        
+    	        byte[] bytes = IOUtils.toByteArray(is);    	        
+    	        Image img = new Image();
+    	        img.setImage(bytes);
+    	        img.setName("comapny_pre");
+    	      
+    	        
+    	        // use the input stream to read the part body
+    	    	Session session = this.getSessionFactory().openSession();
+    			session.beginTransaction();
+    			Product product = (Product) session.load(Product.class,Long.parseLong(idProduct) );
+    			if(productImg!=null && productImg.equals("productImg1")){
+    				product.setImg(img);
+    			}else if (productImg!=null && productImg.equals("productImg2")){
+    				product.setImg2(img);
+    			}
+    			session.update(product);		    			
+    			session.getTransaction().commit();
+    			session.close();
+    			
+    	    }
+
+		
+        return "{\"ok\":\"ok\"}";
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/resaveCompany")
+    public String resaveCompany(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        
+	        
+	        String htmlCompany = uriInfo.getQueryParameters().get("htmlCompany").get(0);
+	        String companyId   = uriInfo.getQueryParameters().get("companyId").get(0);
+	        
+	        
+	        if(htmlCompany==null ){
+	        	htmlCompany="";
+	        }
+	        if(companyId==null || companyId.equals("") ){
+	        	return "{\"ok\":\"ok\"}";
+	        }
+	        
+	        
+	    	Session session = this.getSessionFactory().openSession();
+			session.beginTransaction();
+			Company company = (Company) session.load(Company.class,Integer.parseInt(companyId) );
+			Image img1 = company.getImg();
+			Image img2 = company.getImg2();
+			
+			int index1 = htmlCompany.indexOf("src=\"");
+			int index11= htmlCompany.indexOf(".jpg\"");
+			String first = htmlCompany.substring(0, index1);
+			String second= htmlCompany.substring(index11+5);
+			
+			int index2 = second.indexOf("src=\"");
+			int index21= second.indexOf(".jpg\"");
+			String first2 = second.substring(0, index2);
+			String second2= second.substring(index21+5);
+			
+			if(img1!=null && img2!=null){///${initParam.app}/comanda/ImageAction.action?imageId=${plat.foto.id}
+				htmlCompany=first+"src=\"http://"+host+"/Spring/rest/service/userSrv/loadImg?imgId="+img1.getId()+"\""+second+first2+"src=\"http://10.0.2.2:9090/Spring/rest/service/userSrv/loadImg?imgId="+img2.getId()+"\""+second2;
+			}else if (img1!=null && img2==null){
+				htmlCompany=first+"src=\"http://"+host+"/Spring/rest/service/userSrv/loadImg?imgId="+img1.getId()+"\""+second+first2+"src=\"\""+second2;
+			}else if (img1==null && img2!=null){
+				htmlCompany=first+"src=\"\""+second+first2+"src=\"http://"+host+"/Spring/rest/service/userSrv/loadImg?imgId="+img2.getId()+"\""+second2;				
+			}
+			
+			company.setHtml(htmlCompany);
+			
+			session.update(company);		    			
+			session.getTransaction().commit();
+			session.close();
+	      
+			return "{\"ok\":\"ok\"}";
+			
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		} 
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/resaveProduct")
+    public String resaveProduct(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        
+	        
+	        String htmlProduct = uriInfo.getQueryParameters().get("htmlProduct").get(0);
+	        String companyId   = uriInfo.getQueryParameters().get("companyId").get(0);
+	        String productId   = uriInfo.getQueryParameters().get("productId").get(0);
+	        
+	        String cat = uriInfo.getQueryParameters().get("cat").get(0);
+	        String subcat = uriInfo.getQueryParameters().get("subcat").get(0);
+	        String subsubcat = uriInfo.getQueryParameters().get("subsubcat").get(0);
+	        
+	        SubCategory subcategory =null;
+	        SubSubCategory subsubcategory =null;
+	        
+	        if(htmlProduct==null ){
+	        	htmlProduct="";
+	        }
+	        
+	        if(companyId==null || companyId.equals("") ){
+	        	return "{\"ok\":\"ok\"}";
+	        }
+	        
+	        
+	    	Session session = this.getSessionFactory().openSession();
+			session.beginTransaction();
+			Product product =  (Product) session.load(Product.class,Long.parseLong(productId) );
+			Company company = (Company) session.load(Company.class,Integer.parseInt(companyId) );
+			Category category =  (Category) session.load(Category.class,Long.parseLong(cat) );
+			if(subcat!=null && !subcat.equals("") && !subcat.equals("null")){
+				subcategory =  (SubCategory) session.load(SubCategory.class,Long.parseLong(subcat) );
+			}
+			if(subsubcat!=null && !subsubcat.equals("") && !subsubcat.equals("null")){
+				subsubcategory =  (SubSubCategory) session.load(SubSubCategory.class,Long.parseLong(subsubcat) );
+			}
+			
+			Image img1 = product.getImg();
+			Image img2 = product.getImg2();
+			
+			int index1 = htmlProduct.indexOf("src=\"");
+			int index11= htmlProduct.indexOf(".jpg\"");
+			String first = htmlProduct.substring(0, index1);
+			String second="";
+			if(index11==-1){
+				second= htmlProduct.substring(5);
+			}else{
+				second= htmlProduct.substring(index11+5);
+			}
+			
+			int index2 = second.indexOf("src=\"");
+			int index21= second.indexOf(".jpg\"");
+			String first2 = second.substring(0, index2);
+			String second2="";
+			if(index21==-1){
+				second2= second.substring(5);
+			}else{
+				second2= second.substring(index21+5);
+			}
+			if(img1!=null && img2!=null){///${initParam.app}/comanda/ImageAction.action?imageId=${plat.foto.id}
+				htmlProduct=first+"src=\"http://"+host+"/Spring/rest/service/userSrv/loadImg?imgId="+img1.getId()+"\""+second+first2+"src=\"http://10.0.2.2:9090/Spring/rest/service/userSrv/loadImg?imgId="+img2.getId()+"\""+second2;
+			}else if (img1!=null && img2==null){
+				htmlProduct=first+"src=\"http://"+host+"/Spring/rest/service/userSrv/loadImg?imgId="+img1.getId()+"\""+second+first2+"src=\"\""+second2;
+			}else if (img1==null && img2!=null){
+				htmlProduct=first+"src=\"\""+second+first2+"src=\"http://"+host+"/Spring/rest/service/userSrv/loadImg?imgId="+img2.getId()+"\""+second2;				
+			}
+			
+			product.setHtml(htmlProduct);
+			product.setCompany(company);
+			product.setCategory(category);
+			product.setSubCategory(subcategory);
+			product.setSubsubCategory(subsubcategory);
+		
+			
+			
+			session.update(product);		    			
+			session.getTransaction().commit();
+			session.close();
+	      
+			return "{\"ok\":\"ok\"}";
+			
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		} 
+    }
+    
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/htmlCataleg")
+    public String htmlCataleg(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        
+	        
+	        
+	        String companyId   = uriInfo.getQueryParameters().get("companyId").get(0);
+	        	  
+	        if(companyId==null || companyId.equals("") ){
+	        	return "{\"ok\":\"ok\"}";
+	        }	        	       
+	        String json="";
+	        List<ProductTO> productTOList = new ArrayList<ProductTO>();
+	    	Session session = this.getSessionFactory().openSession();
+			session.beginTransaction();
+			
+			List<Product> productList = (List<Product>) session.createCriteria(Product.class).add(Restrictions.eq("company.id", Integer.parseInt(companyId))).list();
+			
+			for(Product product : productList){
+				ProductTO productTO = new ProductTO(product.getHtml(),product.getId(),product.getName());
+				productTOList.add(productTO);
+			}
+			
+			Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().excludeFieldsWithoutExposeAnnotation().create();
+			json = gson.toJson(productTOList);
+					    			
+			session.getTransaction().commit();
+			session.close();
+	      
+			return json;
+			
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		} 
+    }
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/createProduct")
+    public String createProduct(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        
+	        
+	        
+	        String companyId   = uriInfo.getQueryParameters().get("companyId").get(0);
+	        
+	        String name   = uriInfo.getQueryParameters().get("name").get(0);
+	        
+	        String cat = uriInfo.getQueryParameters().get("cat").get(0);
+	        String subcat = uriInfo.getQueryParameters().get("subcat").get(0);
+	        String subsubcat = uriInfo.getQueryParameters().get("subsubcat").get(0);
+	        
+	        String idiomaS   = uriInfo.getQueryParameters().get("idioma").get(0);
+	        
+	        Idioma idioma = this.idiomaDao.load(idiomaS);
+	        
+	        SubCategory subcategory =null;
+	        SubSubCategory subsubcategory =null;
+	        
+	      
+	        if(companyId==null || companyId.equals("") ){
+	        	return "{\"ok\":\"ok\"}";
+	        }	        	       
+	        
+	    	Session session = this.getSessionFactory().openSession();
+			session.beginTransaction();
+			
+			Company company = (Company) session.load(Company.class,Integer.parseInt(companyId) );
+			Category category =  (Category) session.load(Category.class,Long.parseLong(cat) );
+			if(subcat!=null && !subcat.equals("") && !subcat.equals("null")){
+				subcategory =  (SubCategory) session.load(SubCategory.class,Long.parseLong(subcat) );
+			}
+			if(subsubcat!=null && !subsubcat.equals("") && !subsubcat.equals("null")){
+				subsubcategory =  (SubSubCategory) session.load(SubSubCategory.class,Long.parseLong(subsubcat) );
+			}
+			
+			Product product = new Product();
+			
+			product.setName(name);
+			product.setCompany(company);
+			product.setCategory(category);
+			product.setSubCategory(subcategory);
+			product.setSubsubCategory(subsubcategory);
+			product.setIdioma(idioma);
+			session.save(product);		    			
+			session.getTransaction().commit();
+			session.close();
+	      
+			return "{\"ok\":\"ok\", \"id\":\""+product.getId()+"\"}";
+			
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		} 
+    }
+    
+    
+    @GET
+    @Produces( {MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+    @Path("/htmlCompany")
+    public String htmlCompany(@Context LinkBuilders linkProcessor, @Context UriInfo uriInfo) {
+    	try {
+	        
+	        
+	        String htmlCompany = "";
+	        String companyId   = uriInfo.getQueryParameters().get("companyId").get(0);
+	        
+	       
+	        if(companyId==null || companyId.equals("") ){
+	        	return "{\"ok\":\"ko\"}";
+	        }
+	        
+	        
+	    	Session session = this.getSessionFactory().openSession();
+			session.beginTransaction();
+			Company company = (Company) session.load(Company.class,Integer.parseInt(companyId) );	
+			HtmlTO htmlTO = new HtmlTO(company.getHtml());
+			session.getTransaction().commit();
+			session.close();
+	      
+			 Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().excludeFieldsWithoutExposeAnnotation().create();
+			 String json= gson.toJson(htmlTO);
+			 return json;
+			
+    	} catch (HibernateException e) {			
+			e.printStackTrace();
+			return "{\"ok\":\"ko\"}";
+		} 
+    }
+    
+    @GET
+    @Produces("application/json")
+    @Path("/loadImg")
+    public StreamingOutput loadImg(InputStream requestBodyStream, @Context UriInfo uriInfo) throws IOException {
+        
+    			String imgId = uriInfo.getQueryParameters().get("imgId").get(0);
+    			Session session = this.getSessionFactory().openSession();
+     
+    	
+    			try {
+	    	    	
+	    			session.beginTransaction();
+	    			
+	    			Image img = (Image) session.load(Image.class, Long.parseLong(imgId));
+	    			
+	    			
+	    			
+	    			BufferedImage originalImage;
+	    			
+	    				
+	    							
+	    				
+	    				InputStream in = new ByteArrayInputStream(img.getImage());
+	    				originalImage = ImageIO.read(in);	
+	    				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	    				
+	    				ImageIO.write(originalImage, "jpg", baos);
+	    				baos.flush();
+	    				final byte[] imageInByte  = baos.toByteArray();
+	    				baos.close();
+	    				
+	    				session.getTransaction().commit();
+	        			session.close();
+	    				return new StreamingOutput() {
+	
+	        	            public void write(OutputStream output) throws IOException, WebApplicationException {
+	        	                byte[] out = imageInByte;
+	        	                output.write(out);
+	        	            }
+	        	        };
+    			} catch (IOException e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    				session.close();
+    			}
+				return null;
+		
+    			
     }
 
 	public void setUsersDao( UsersDao usersDao ){
