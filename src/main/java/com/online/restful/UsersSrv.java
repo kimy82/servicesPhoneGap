@@ -865,7 +865,7 @@ public class UsersSrv extends HibernateDaoSupport {
 			List<Product> productList = (List<Product>) session.createCriteria(Product.class).add(Restrictions.eq("company.id", Integer.parseInt(companyId))).list();
 			
 			for(Product product : productList){
-				ProductTO productTO = new ProductTO(product.getHtml(),product.getId(),product.getName());
+				ProductTO productTO = new ProductTO(product.getId(),product.getHtml(),product.getName());
 				productTOList.add(productTO);
 			}
 			
